@@ -6,8 +6,6 @@ const DB_KEYS = {
   CURRENT_USER: 'cat_current_user',
 };
 
-// ─── HELPERS ────────────────────────────────────────────────────────────────
-
 function getAll(key) {
   try {
     return JSON.parse(localStorage.getItem(key) || '[]');
@@ -24,35 +22,17 @@ function genId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
 }
 
-// ─── USERS ───────────────────────────────────────────────────────────────────
-
 export const userDB = {
-  getAll() {
-    return getAll(DB_KEYS.USERS);
-  },
-
-  getById(id) {
-    return this.getAll().find((u) => u.id === id) || null;
-  },
-
-  getByCedula(cedula) {
-    return this.getAll().find((u) => u.cedula === cedula) || null;
-  },
-
+  getAll() { return getAll(DB_KEYS.USERS); },
+  getById(id) { return this.getAll().find((u) => u.id === id) || null; },
+  getByCedula(cedula) { return this.getAll().find((u) => u.cedula === cedula) || null; },
   create(data) {
     const users = this.getAll();
-    const user = {
-      id: genId(),
-      ...data,
-      createdAt: new Date().toISOString(),
-      role: data.role || 'user',
-      estado: data.estado || 'activo',
-    };
+    const user = { id: genId(), ...data, createdAt: new Date().toISOString(), role: data.role || 'user', estado: data.estado || 'activo' };
     users.push(user);
     setAll(DB_KEYS.USERS, users);
     return user;
   },
-
   update(id, data) {
     const users = this.getAll();
     const idx = users.findIndex((u) => u.id === id);
@@ -61,19 +41,16 @@ export const userDB = {
     setAll(DB_KEYS.USERS, users);
     return users[idx];
   },
-
   delete(id) {
     const users = this.getAll().filter((u) => u.id !== id);
     setAll(DB_KEYS.USERS, users);
   },
-
   authenticate(cedula, password) {
     const user = this.getByCedula(cedula);
     if (!user) return null;
     if (user.password !== password) return null;
     return user;
   },
-
   isActive(user) {
     if (user.estado !== 'activo') return false;
     if (user.role === 'admin') return true;
@@ -82,49 +59,26 @@ export const userDB = {
   },
 };
 
-// ─── SESSION ─────────────────────────────────────────────────────────────────
-
 export const sessionDB = {
   get() {
-    try {
-      return JSON.parse(localStorage.getItem(DB_KEYS.CURRENT_USER) || 'null');
-    } catch {
-      return null;
-    }
+    try { return JSON.parse(localStorage.getItem(DB_KEYS.CURRENT_USER) || 'null'); }
+    catch { return null; }
   },
-
-  set(user) {
-    localStorage.setItem(DB_KEYS.CURRENT_USER, JSON.stringify(user));
-  },
-
-  clear() {
-    localStorage.removeItem(DB_KEYS.CURRENT_USER);
-  },
+  set(user) { localStorage.setItem(DB_KEYS.CURRENT_USER, JSON.stringify(user)); },
+  clear() { localStorage.removeItem(DB_KEYS.CURRENT_USER); },
 };
 
-// ─── TURNS ───────────────────────────────────────────────────────────────────
-
 export const turnDB = {
-  getAll() {
-    return getAll(DB_KEYS.TURNS);
-  },
-
-  getByUser(userId) {
-    return this.getAll().filter((t) => t.userId === userId);
-  },
-
+  getAll() { return getAll(DB_KEYS.TURNS); },
+  getByUser(userId) { return this.getAll().filter((t) => t.userId === userId); },
   getByDate(userId, date) {
     return this.getAll().find((t) => t.userId === userId && t.fecha === date) || null;
   },
-
   getByMonth(userId, year, month) {
     const prefix = `${year}-${String(month).padStart(2, '0')}`;
-    return this.getAll().filter(
-      (t) => t.userId === userId && t.fecha && t.fecha.startsWith(prefix)
-    );
+    return this.getAll().filter((t) => t.userId === userId && t.fecha && t.fecha.startsWith(prefix));
   },
-
-save(data) {
+  save(data) {
     const turns = this.getAll();
     if (data.id && typeof data.id === 'string' && data.id.length > 5) {
       const idx = turns.findIndex((t) => t.id === data.id);
@@ -135,35 +89,15 @@ save(data) {
       }
     }
     const { id: _ignore, ...rest } = data;
-    const turn = {
-      id: genId(),
-      ...rest,
-      createdAt: new Date().toISOString(),
-      synced: false,
-    };
+    const turn = { id: genId(), ...rest, createdAt: new Date().toISOString(), synced: false };
     turns.push(turn);
     setAll(DB_KEYS.TURNS, turns);
     return turn;
   },
-    // Si no tiene id o no se encontró → crear nuevo
-    const { id: _ignore, ...rest } = data; // eliminar id undefined/viejo
-    const turn = {
-      id: genId(),
-      ...rest,
-      createdAt: new Date().toISOString(),
-      synced: false,
-    };
-    turns.push(turn);
-    setAll(DB_KEYS.TURNS, turns);
-    return turn;
-  },
-
   delete(id) {
     const turns = this.getAll().filter((t) => t.id !== id);
     setAll(DB_KEYS.TURNS, turns);
   },
-
-  // Limpiar turnos corruptos (sin id o sin fecha)
   cleanup() {
     const turns = this.getAll().filter((t) => t.id && t.fecha && t.userId);
     setAll(DB_KEYS.TURNS, turns);
@@ -171,22 +105,21 @@ save(data) {
   },
 };
 
-// ─── SEED ADMIN ──────────────────────────────────────────────────────────────
-
 export function seedAdminIfEmpty() {
   const users = userDB.getAll();
   if (users.length === 0) {
     userDB.create({
-      nombre: 'Administrador',
-      cedula: 'admin',
-      codigoChofer: 'ADMIN',
-      matricula: '-',
-      movil: '-',
-      email: 'admin@cierrealtoque.uy',
-      password: 'admin123',
-      role: 'admin',
-      estado: 'activo',
-      firma: '',
+      nombre: 'Administrador', cedula: 'admin', codigoChofer: 'ADMIN',
+      matricula: '-', movil: '-', email: 'admin@cierrealtoque.uy',
+      password: 'admin123', role: 'admin', estado: 'activo', firma: '',
     });
   }
 }
+```
+
+**4.** Bajás y clic en **Commit changes** → **Commit changes**
+
+Luego en la Terminal:
+```
+git pull
+npm run dev
