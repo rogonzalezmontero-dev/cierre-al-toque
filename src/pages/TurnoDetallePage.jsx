@@ -44,15 +44,12 @@ export default function TurnoDetallePage() {
     const doc = new jsPDF({ unit: 'mm', format: 'a4' });
     const W = 210; const pad = 14;
 
-    // Fondo blanco total
     doc.setFillColor(255, 255, 255);
     doc.rect(0, 0, W, 297, 'F');
 
-    // Encabezado amarillo
     doc.setFillColor(245, 200, 0);
     doc.rect(0, 0, W, 32, 'F');
 
-    // Título
     doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(17, 17, 17);
@@ -89,14 +86,12 @@ export default function TurnoDetallePage() {
       y += 4;
     };
 
-    // Datos del chofer
     title('DATOS DEL CHOFER');
     doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(40, 40, 40);
     doc.text(`Nombre: ${userData.nombre}`, pad, y); y += 5;
     doc.text(`Cédula: ${userData.cedula}   Cód. Chofer: ${userData.codigoChofer}`, pad, y); y += 5;
     doc.text(`Matrícula: ${userData.matricula}   Móvil: ${userData.movil}`, pad, y); y += 8;
 
-    // Kilometraje
     if (turn.kmInicial || turn.kmFinal) {
       title('KILOMETRAJE');
       doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(80, 80, 80);
@@ -108,7 +103,6 @@ export default function TurnoDetallePage() {
       } else { y += 3; }
     }
 
-    // Producción
     title('PRODUCCIÓN');
     row('Banderas Diurno', turn.banderasDiurno);
     row('Banderas Nocturno', turn.banderasNocturno);
@@ -118,7 +112,6 @@ export default function TurnoDetallePage() {
     row('Aporte Leyes (18.1%)', turn.aporteLey);
     y += 2;
 
-    // Gastos
     if (turn.totalGastos > 0) {
       title('GASTOS');
       if (+turn.combustible > 0) row('Combustible', turn.combustible);
@@ -131,7 +124,6 @@ export default function TurnoDetallePage() {
       y += 2;
     }
 
-    // Digitales
     if (turn.totalDigital > 0) {
       title('COBROS DIGITALES');
       if (turn.h13Total > 0) row('H13', turn.h13Total);
@@ -141,7 +133,6 @@ export default function TurnoDetallePage() {
       y += 2;
     }
 
-    // Resultado
     title('RESULTADO');
     row('Líquido Empresa', turn.liquidoEmpresa);
     row('Subtotal', turn.subtotal);
@@ -151,7 +142,6 @@ export default function TurnoDetallePage() {
     divider();
     y += 2;
 
-    // Total Final — caja amarilla
     doc.setFillColor(245, 200, 0);
     doc.rect(pad, y, W - pad * 2, 20, 'F');
     doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(17, 17, 17);
@@ -160,7 +150,6 @@ export default function TurnoDetallePage() {
     doc.text(`$${Number(turn.totalFinal || 0).toFixed(0)}`, W - pad - 4, y + 14, { align: 'right' });
     y += 26;
 
-    // Firma
     if (userData.firma) {
       doc.setFontSize(9); doc.setTextColor(80, 80, 80); doc.setFont('helvetica', 'normal');
       doc.text('Firma del chofer:', pad, y); y += 4;
@@ -286,9 +275,3 @@ export default function TurnoDetallePage() {
     </div>
   );
 }
-```
-
-Commit changes, y después en la Terminal:
-```
-git pull
-npm run dev
