@@ -124,11 +124,9 @@ export const turnDB = {
     );
   },
 
-  save(data) {
+save(data) {
     const turns = this.getAll();
-
-    // Si tiene id válido y existe en la lista → actualizar
-    if (data.id && typeof data.id === 'string' && data.id.length > 0) {
+    if (data.id && typeof data.id === 'string' && data.id.length > 5) {
       const idx = turns.findIndex((t) => t.id === data.id);
       if (idx !== -1) {
         turns[idx] = { ...turns[idx], ...data, updatedAt: new Date().toISOString() };
@@ -136,7 +134,17 @@ export const turnDB = {
         return turns[idx];
       }
     }
-
+    const { id: _ignore, ...rest } = data;
+    const turn = {
+      id: genId(),
+      ...rest,
+      createdAt: new Date().toISOString(),
+      synced: false,
+    };
+    turns.push(turn);
+    setAll(DB_KEYS.TURNS, turns);
+    return turn;
+  },
     // Si no tiene id o no se encontró → crear nuevo
     const { id: _ignore, ...rest } = data; // eliminar id undefined/viejo
     const turn = {
