@@ -41,11 +41,8 @@ export default function HistorialPage() {
 
   const todayStr = format(new Date(), 'yyyy-MM-dd');
 
-  // Totales mensuales
-  const totalBanderas   = turns.reduce((s, t) => s + (t.totalBanderas || 0), 0);
   const totalRetribucion = turns.reduce((s, t) => s + (t.retribucion || 0), 0);
-  const totalDigital    = turns.reduce((s, t) => s + (t.totalDigital || 0), 0);
-  const totalEntregado  = turns.reduce((s, t) => s + (t.totalFinal || 0), 0);
+  const totalEntregado   = turns.reduce((s, t) => s + (t.totalFinal || 0), 0);
 
   const fmtDia = (fecha) => {
     try {
@@ -54,13 +51,11 @@ export default function HistorialPage() {
     } catch { return fecha; }
   };
 
-  // Acumulado de retribución por turno (running total)
   let acumulado = 0;
 
   return (
     <div>
 
-      {/* ── RETRIBUCIÓN ACUMULADA DESTACADA ── */}
       {turns.length > 0 && (
         <div style={{
           background: 'linear-gradient(135deg, #1a1a00 0%, #2a2000 100%)',
@@ -71,22 +66,11 @@ export default function HistorialPage() {
           position: 'relative',
           overflow: 'hidden',
         }}>
-          <div style={{
-            position: 'absolute', right: -8, top: -8,
-            fontSize: '5rem', opacity: 0.07, lineHeight: 1,
-          }}>💰</div>
-          <div style={{
-            fontSize: '0.7rem', fontWeight: 700,
-            color: 'var(--amarillo)', letterSpacing: 3,
-            textTransform: 'uppercase', marginBottom: 4,
-          }}>
+          <div style={{ position: 'absolute', right: -8, top: -8, fontSize: '5rem', opacity: 0.07, lineHeight: 1 }}>💰</div>
+          <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--amarillo)', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 4 }}>
             Retribución acumulada — {MONTHS[month - 1]} {year}
           </div>
-          <div style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: '3.2rem', fontWeight: 900,
-            color: 'var(--amarillo)', lineHeight: 1,
-          }}>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: '3.2rem', fontWeight: 900, color: 'var(--amarillo)', lineHeight: 1 }}>
             ${totalRetribucion.toFixed(0)}
           </div>
           <div style={{ fontSize: '0.78rem', color: 'var(--gris2)', marginTop: 6 }}>
@@ -100,7 +84,6 @@ export default function HistorialPage() {
         </div>
       )}
 
-      {/* ── CALENDARIO ── */}
       <div className="card">
         <div className="calendar-header">
           <button className="btn btn-ghost btn-sm" onClick={prevMonth}><ChevronLeft size={18} /></button>
@@ -143,11 +126,9 @@ export default function HistorialPage() {
         </div>
       </div>
 
-      {/* ── LISTA DE TURNOS CON RETRIBUCIÓN ACUMULADA ── */}
       {turns.length > 0 && (
         <div className="card">
           <div className="card-title">📋 Retribución por día</div>
-
           {turns.map((t, idx) => {
             acumulado += (t.retribucion || 0);
             return (
@@ -163,7 +144,6 @@ export default function HistorialPage() {
                   gap: 10,
                 }}
               >
-                {/* Número de turno */}
                 <div style={{
                   width: 28, height: 28, borderRadius: '50%',
                   background: 'rgba(245,200,0,0.15)',
@@ -173,108 +153,67 @@ export default function HistorialPage() {
                 }}>
                   {idx + 1}
                 </div>
-
-                {/* Fecha */}
                 <div style={{ flex: 1 }}>
-                  <div style={{
-                    fontWeight: 700, fontSize: '0.9rem',
-                    color: 'var(--blanco)', textTransform: 'capitalize',
-                  }}>
+                  <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--blanco)', textTransform: 'capitalize' }}>
                     {fmtDia(t.fecha)}
                   </div>
                   <div style={{ fontSize: '0.72rem', color: 'var(--gris2)', marginTop: 1 }}>
-                    Banderas: ${(t.totalBanderas || 0).toFixed(0)}
+                    Entregado: ${(t.totalFinal || 0).toFixed(0)}
                   </div>
                 </div>
-
-                {/* Retribución del día */}
                 <div style={{ textAlign: 'center', minWidth: 70 }}>
-                  <div style={{
-                    fontFamily: 'var(--font-display)',
-                    fontSize: '1.2rem', fontWeight: 800,
-                    color: 'var(--blanco)',
-                  }}>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem', fontWeight: 800, color: 'var(--blanco)' }}>
                     ${(t.retribucion || 0).toFixed(0)}
                   </div>
-                  <div style={{ fontSize: '0.6rem', color: 'var(--gris2)', letterSpacing: 1 }}>
-                    RETRIB.
-                  </div>
+                  <div style={{ fontSize: '0.6rem', color: 'var(--gris2)', letterSpacing: 1 }}>RETRIB.</div>
                 </div>
-
-                {/* Acumulado */}
-                <div style={{
-                  textAlign: 'right', minWidth: 80,
-                  borderLeft: '1px solid var(--gris)', paddingLeft: 10,
-                }}>
-                  <div style={{
-                    fontFamily: 'var(--font-display)',
-                    fontSize: '1.1rem', fontWeight: 900,
-                    color: 'var(--amarillo)',
-                  }}>
+                <div style={{ textAlign: 'right', minWidth: 80, borderLeft: '1px solid var(--gris)', paddingLeft: 10 }}>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 900, color: 'var(--amarillo)' }}>
                     ${acumulado.toFixed(0)}
                   </div>
-                  <div style={{ fontSize: '0.6rem', color: 'var(--amarillo)', opacity: 0.6, letterSpacing: 1 }}>
-                    ACUMULADO
-                  </div>
+                  <div style={{ fontSize: '0.6rem', color: 'var(--amarillo)', opacity: 0.6, letterSpacing: 1 }}>ACUMULADO</div>
                 </div>
               </div>
             );
           })}
 
-          {/* Total final de retribución */}
           <div style={{
-            marginTop: 10,
-            background: 'var(--amarillo)',
-            borderRadius: 8, padding: '12px 14px',
+            marginTop: 10, background: 'var(--amarillo)', borderRadius: 8, padding: '12px 14px',
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           }}>
             <div>
-              <div style={{ fontWeight: 800, color: 'var(--negro)', fontSize: '0.85rem' }}>
-                TOTAL RETRIBUCIÓN
-              </div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--gris)', marginTop: 1 }}>
-                {turns.length} turnos · {MONTHS[month - 1]}
-              </div>
+              <div style={{ fontWeight: 800, color: 'var(--negro)', fontSize: '0.85rem' }}>TOTAL RETRIBUCIÓN</div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--gris)', marginTop: 1 }}>{turns.length} turnos · {MONTHS[month - 1]}</div>
             </div>
-            <div style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: '2rem', fontWeight: 900, color: 'var(--negro)',
-            }}>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 900, color: 'var(--negro)' }}>
               ${totalRetribucion.toFixed(0)}
             </div>
           </div>
         </div>
       )}
 
-      {/* ── RESUMEN COMPLETO DEL MES ── */}
       {turns.length > 0 && (
         <div className="card">
-          <div className="card-title">📈 Resumen completo — {MONTHS[month - 1]}</div>
-          <div className="resumen-grid">
+          <div className="card-title">📈 Resumen — {MONTHS[month - 1]}</div>
+          <div className="resumen-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
             <div className="resumen-item">
               <div className="r-label">Turnos</div>
               <div className="r-value">{turns.length}</div>
             </div>
             <div className="resumen-item">
-              <div className="r-label">Total Banderas</div>
-              <div className="r-value">${totalBanderas.toFixed(0)}</div>
-            </div>
-            <div className="resumen-item">
               <div className="r-label">Retribución</div>
               <div className="r-value">${totalRetribucion.toFixed(0)}</div>
             </div>
-            <div className="resumen-item">
-              <div className="r-label">Total Digital</div>
-              <div className="r-value">${totalDigital.toFixed(0)}</div>
-            </div>
           </div>
           <div style={{
-            background: 'var(--negro3)', borderRadius: 8,
-            padding: '12px 16px', marginTop: 10,
+            background: 'var(--amarillo)', borderRadius: 8, padding: '14px 16px', marginTop: 10,
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           }}>
-            <span style={{ fontWeight: 700, color: 'var(--gris2)', fontSize: '0.85rem' }}>TOTAL ENTREGADO</span>
-            <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.8rem', fontWeight: 900, color: 'var(--blanco)' }}>
+            <div>
+              <div style={{ fontWeight: 800, color: 'var(--negro)', fontSize: '0.85rem' }}>TOTAL ENTREGADO</div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--gris)', marginTop: 1 }}>{MONTHS[month - 1]} {year}</div>
+            </div>
+            <span style={{ fontFamily: 'var(--font-display)', fontSize: '2.2rem', fontWeight: 900, color: 'var(--negro)' }}>
               ${totalEntregado.toFixed(0)}
             </span>
           </div>
