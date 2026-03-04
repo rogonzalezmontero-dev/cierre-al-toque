@@ -1,5 +1,3 @@
-// db.js - localStorage-based database with sync queue for offline support
-
 const DB_KEYS = {
   USERS: 'cat_users',
   TURNS: 'cat_turns',
@@ -109,17 +107,16 @@ export function seedAdminIfEmpty() {
   const users = userDB.getAll();
   if (users.length === 0) {
     userDB.create({
-      nombre: 'Administrador', cedula: 'admin', codigoChofer: 'ADMIN',
-      matricula: '-', movil: '-', email: 'admin@cierrealtoque.uy',
-      password: 'admin123', role: 'admin', estado: 'activo', firma: '',
+      nombre: 'Administrador',
+      cedula: 'admin',
+      codigoChofer: 'ADMIN',
+      matricula: '-',
+      movil: '-',
+      email: 'admin@cierrealtoque.uy',
+      password: 'admin123',
+      role: 'admin',
+      estado: 'activo',
+      firma: '',
     });
   }
 }
-```
-
-**4.** Bajás y clic en **Commit changes** → **Commit changes**
-
-Luego en la Terminal:
-```
-git pull
-npm run dev
