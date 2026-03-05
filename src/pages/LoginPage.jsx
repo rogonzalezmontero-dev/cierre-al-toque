@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [cedula, setCedula] = useState('');
+  const [codigoChofer, setCodigoChofer] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -14,7 +14,7 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
     setLoading(true);
-    const result = login(cedula.trim(), password);
+    const result = login(codigoChofer.trim(), password);
     setLoading(false);
     if (result.ok) {
       navigate('/', { replace: true });
@@ -42,13 +42,13 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="form-label">Cédula de Identidad</label>
+            <label className="form-label">Número de Chofer</label>
             <input
               className="form-input"
               type="text"
-              placeholder="Ej: 12345678"
-              value={cedula}
-              onChange={(e) => setCedula(e.target.value)}
+              placeholder="Ej: 12345"
+              value={codigoChofer}
+              onChange={(e) => setCodigoChofer(e.target.value)}
               required
               autoComplete="username"
             />
@@ -77,12 +77,6 @@ export default function LoginPage() {
           <Link to="/register" style={{ color: 'var(--amarillo)', fontWeight: 700 }}>
             Registrarse
           </Link>
-        </div>
-
-        <div className="mt-2" style={{ borderTop: '1px solid var(--gris)', paddingTop: 12 }}>
-          <div className="text-muted" style={{ fontSize: '0.72rem', textAlign: 'center' }}>
-            Usuario demo admin: <strong style={{ color: 'var(--amarillo)' }}>admin</strong> / <strong style={{ color: 'var(--amarillo)' }}>admin123</strong>
-          </div>
         </div>
       </div>
     </div>
