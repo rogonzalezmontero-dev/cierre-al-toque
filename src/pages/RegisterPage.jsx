@@ -10,13 +10,13 @@ export default function RegisterPage() {
   const [drawing, setDrawing] = useState(false);
   const [hasSig, setHasSig] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
   const [form, setForm] = useState({
     nombre: '', cedula: '', codigoChofer: '',
     matricula: '', movil: '', email: '',
     password: '', confirmPassword: '',
   });
 
-  // Canvas signature
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -89,9 +89,13 @@ export default function RegisterPage() {
       setError('La contraseña debe tener al menos 6 caracteres');
       return;
     }
-    const existing = userDB.getByCedula(form.cedula);
+    if (!form.codigoChofer) {
+      setError('El código de chofer es obligatorio');
+      return;
+    }
+    const existing = userDB.getByCodigoChofer(form.codigoChofer);
     if (existing) {
-      setError('Ya existe un usuario con esa cédula');
+      setError('Ya existe un usuario con ese código de chofer');
       return;
     }
 
@@ -111,8 +115,13 @@ export default function RegisterPage() {
       vencimiento: '',
     });
 
-    const result = login(form.cedula, form.password);
-    if (result.ok) navigate('/', { replace: true });
+    const result = login(form.codigoChofer, form.password);
+    if (result.ok) {
+      setSuccess(true);
+      setTimeout(() => navigate('/', { replace: true }), 2000);
+    } else {
+      setError('Error al ingresar, intentá de nuevo');
+    }
   };
 
   return (
@@ -126,7 +135,17 @@ export default function RegisterPage() {
       <div className="auth-card" style={{ maxWidth: 420, width: '100%' }}>
         <div className="auth-title">Datos del Chofer</div>
 
-        {error && <div className="alert alert-error"><span>⚠</span> {error}</div>}
+        {success && (
+          <div className="alert alert-success">
+            ✅ ¡Registro exitoso! Entrando...
+          </div>
+        )}
+
+        {error && (
+          <div className="alert alert-error">
+            <span>⚠</span> {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -141,14 +160,14 @@ export default function RegisterPage() {
             </div>
             <div className="form-group">
               <label className="form-label">Cód. Chofer *</label>
-              <input className="form-input" required value={form.codigoChofer} onChange={(e) => set('codigoChofer', e.target.value)} placeholder="CH001" />
+              <input className="form-input" required value={form.codigoChofer} onChange={(e) => set('codigoChofer', e.target.value)} placeholder="12345" />
             </div>
           </div>
 
           <div className="grid-2">
             <div className="form-group">
               <label className="form-label">Matrícula *</label>
-              <input className="form-input" required value={form.matricula} onChange={(e) => set('matricula', e.target.value)} placeholder="ABC 1234" />
+              <input className="form-input" required value={form.matricula} onChange={(e) => set('matricula', e.target.value)} placeholder="STX 1234" />
             </div>
             <div className="form-group">
               <label className="form-label">Nº Móvil *</label>
@@ -157,7 +176,7 @@ export default function RegisterPage() {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Email</label>
+            <label className="form-label">Email (opcional)</label>
             <input className="form-input" type="email" value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="correo@ejemplo.com" />
           </div>
 
@@ -172,7 +191,6 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          {/* Firma Digital */}
           <div className="form-group">
             <label className="form-label">Firma Digital (opcional)</label>
             <canvas
@@ -193,7 +211,7 @@ export default function RegisterPage() {
             </button>
           </div>
 
-          <button className="btn btn-primary btn-full mt-2" type="submit">
+          <button className="btn btn-primary btn-full mt-2" type="submit" disabled={success}>
             REGISTRARME
           </button>
         </form>
