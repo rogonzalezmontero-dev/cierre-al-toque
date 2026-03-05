@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cierre-al-toque-v1';
+const CACHE_NAME = 'cierre-al-toque-v5';
 const urlsToCache = [
   '/',
   '/index.html',
