@@ -1,3 +1,5 @@
+import bcrypt from 'bcryptjs';
+
 const DB_KEYS = {
   USERS: 'cat_users',
   TURNS: 'cat_turns',
@@ -24,9 +26,18 @@ export const userDB = {
   getAll() { return getAll(DB_KEYS.USERS); },
   getById(id) { return this.getAll().find((u) => u.id === id) || null; },
   getByCedula(cedula) { return this.getAll().find((u) => u.cedula === cedula) || null; },
+  getByCodigoChofer(codigo) { return this.getAll().find((u) => u.codigoChofer === codigo) || null; },
   create(data) {
     const users = this.getAll();
-    const user = { id: genId(), ...data, createdAt: new Date().toISOString(), role: data.role || 'user', estado: data.estado || 'activo' };
+    const hashed = bcrypt.hashSync(data.password, 10);
+    const user = {
+      id: genId(),
+      ...data,
+      password: hashed,
+      createdAt: new Date().toISOString(),
+      role: data.role || 'user',
+      estado: data.estado || 'activo',
+    };
     users.push(user);
     setAll(DB_KEYS.USERS, users);
     return user;
@@ -35,6 +46,9 @@ export const userDB = {
     const users = this.getAll();
     const idx = users.findIndex((u) => u.id === id);
     if (idx === -1) return null;
+    if (data.password) {
+      data.password = bcrypt.hashSync(data.password, 10);
+    }
     users[idx] = { ...users[idx], ...data, updatedAt: new Date().toISOString() };
     setAll(DB_KEYS.USERS, users);
     return users[idx];
@@ -43,10 +57,10 @@ export const userDB = {
     const users = this.getAll().filter((u) => u.id !== id);
     setAll(DB_KEYS.USERS, users);
   },
-  authenticate(cedula, password) {
-    const user = this.getByCedula(cedula);
+  authenticate(codigoChofer, password) {
+    const user = this.getByCodigoChofer(codigoChofer);
     if (!user) return null;
-    if (user.password !== password) return null;
+    if (!bcrypt.compareSync(password, user.password)) return null;
     return user;
   },
   isActive(user) {
