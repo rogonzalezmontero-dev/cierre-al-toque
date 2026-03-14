@@ -2,11 +2,17 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { userDB, turnDB } from '../db/db';
-import { calcularTurno } from '../utils/calculos';
+import { calcularTurno, DEFAULTS } from '../utils/calculos';
 import { format } from 'date-fns';
 import { Plus, Trash2, Save, ChevronDown, ChevronUp } from 'lucide-react';
 
 const today = () => format(new Date(), 'yyyy-MM-dd');
+
+const CONFIG_KEY = 'cat_config';
+function getConfig() {
+  try { return JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}'); }
+  catch { return {}; }
+}
 
 function CurrencyInput({ label, value, onChange, placeholder = '0', big = false }) {
   return (
@@ -75,21 +81,21 @@ export default function NuevoTurnoPage() {
   const navigate = useNavigate();
   const isActive = userDB.isActive(user);
 
+  const config = getConfig();
+
   const [fecha, setFecha] = useState(today());
   const [showGastos, setShowGastos] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
-  // Kilometraje
   const [kmInicial, setKmInicial] = useState('');
   const [kmFinal, setKmFinal] = useState('');
 
-  // Producción
   const [banderasDiurno, setBanderasDiurno] = useState('');
   const [banderasNocturno, setBanderasNocturno] = useState('');
   const [fichas, setFichas] = useState('');
-  const [pctRetribucion, setPctRetribucion] = useState('29');
+  const [pctRetribucion, setPctRetribucion] = useState(String(config.pctRetribucion ?? DEFAULTS.PCT_RETRIBUCION));
+  const [pctAportes, setPctAportes] = useState(String(config.pctAportes ?? DEFAULTS.PCT_APORTES));
 
-  // Gastos
   const [combustible, setCombustible] = useState('');
   const [viaticos, setViaticos] = useState('');
   const [aceite, setAceite] = useState('');
@@ -97,12 +103,10 @@ export default function NuevoTurnoPage() {
   const [lavado, setLavado] = useState('');
   const [otros, setOtros] = useState('');
 
-  // Digitales
   const [h13, setH13] = useState(['']);
   const [mercadoPago, setMercadoPago] = useState([{ monto: '', operacion: '' }]);
   const [tarjetas, setTarjetas] = useState('');
 
-  // Load existing turn for date
   useEffect(() => {
     const existing = turnDB.getByDate(user.id, fecha);
     if (existing) {
@@ -111,7 +115,8 @@ export default function NuevoTurnoPage() {
       setBanderasDiurno(existing.banderasDiurno || '');
       setBanderasNocturno(existing.banderasNocturno || '');
       setFichas(existing.fichas || '');
-      setPctRetribucion(existing.pctRetribucion || '29');
+      setPctRetribucion(existing.pctRetribucion || String(config.pctRetribucion ?? DEFAULTS.PCT_RETRIBUCION));
+      setPctAportes(existing.pctAportes || String(config.pctAportes ?? DEFAULTS.PCT_APORTES));
       setCombustible(existing.combustible || '');
       setViaticos(existing.viaticos || '');
       setAceite(existing.aceite || '');
@@ -125,7 +130,9 @@ export default function NuevoTurnoPage() {
     } else {
       setKmInicial(''); setKmFinal('');
       setBanderasDiurno(''); setBanderasNocturno(''); setFichas('');
-      setPctRetribucion('29'); setCombustible(''); setViaticos('');
+      setPctRetribucion(String(config.pctRetribucion ?? DEFAULTS.PCT_RETRIBUCION));
+      setPctAportes(String(config.pctAportes ?? DEFAULTS.PCT_APORTES));
+      setCombustible(''); setViaticos('');
       setAceite(''); setGomeria(''); setLavado(''); setOtros('');
       setH13(['']); setMercadoPago([{ monto: '', operacion: '' }]);
       setTarjetas(''); setIsSaved(false);
@@ -133,13 +140,12 @@ export default function NuevoTurnoPage() {
   }, [fecha, user.id]);
 
   const datos = {
-    banderasDiurno, banderasNocturno, fichas, pctRetribucion,
+    banderasDiurno, banderasNocturno, fichas, pctRetribucion, pctAportes,
     combustible, viaticos, aceite, gomeria, lavado, otros,
     h13, mercadoPago, tarjetas,
   };
   const calc = calcularTurno(datos);
 
-  // km recorridos calculado automático
   const kmRecorridos = (kmInicial !== '' && kmFinal !== '')
     ? Math.max(0, parseFloat(kmFinal) - parseFloat(kmInicial))
     : null;
@@ -152,7 +158,6 @@ export default function NuevoTurnoPage() {
         return;
       }
     }
-
     const existing = turnDB.getByDate(user.id, fecha);
     const savedTurn = turnDB.save({
       id: existing?.id,
@@ -168,12 +173,10 @@ export default function NuevoTurnoPage() {
     navigate(`/turno/${savedTurn.id}`);
   };
 
-  // H13 handlers
   const addH13 = () => setH13((h) => [...h, '']);
   const setH13Val = (i, v) => setH13((h) => h.map((x, j) => j === i ? v : x));
   const removeH13 = (i) => setH13((h) => h.filter((_, j) => j !== i));
 
-  // MP handlers
   const addMP = () => setMercadoPago((m) => [...m, { monto: '', operacion: '' }]);
   const setMPVal = (i, k, v) => setMercadoPago((m) => m.map((x, j) => j === i ? { ...x, [k]: v } : x));
   const removeMP = (i) => setMercadoPago((m) => m.filter((_, j) => j !== i));
@@ -186,7 +189,6 @@ export default function NuevoTurnoPage() {
         </div>
       )}
 
-      {/* Fecha */}
       <div className="card">
         <div className="card-title">📅 Fecha del Turno</div>
         <input
@@ -203,7 +205,6 @@ export default function NuevoTurnoPage() {
         )}
       </div>
 
-      {/* Kilometraje */}
       <div className="card">
         <div className="card-title">🚗 Kilometraje</div>
         <div className="grid-2">
@@ -223,7 +224,6 @@ export default function NuevoTurnoPage() {
         )}
       </div>
 
-      {/* Producción */}
       <div className="card">
         <div className="card-title">🏁 Producción</div>
         <div className="grid-2">
@@ -238,9 +238,7 @@ export default function NuevoTurnoPage() {
             className="form-input"
             type="number"
             inputMode="decimal"
-            min="0"
-            max="100"
-            step="0.1"
+            min="0" max="100" step="0.1"
             value={pctRetribucion}
             onChange={(e) => setPctRetribucion(e.target.value)}
             style={{ fontSize: '1.1rem', fontWeight: 700 }}
@@ -258,10 +256,13 @@ export default function NuevoTurnoPage() {
             <span style={{ color: 'var(--gris2)' }}>Retribución ({pctRetribucion}%)</span>
             <span style={{ fontWeight: 700, color: 'var(--blanco)' }}>${calc.retribucion}</span>
           </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginTop: 4 }}>
+            <span style={{ color: 'var(--gris2)' }}>Aportes ({pctAportes}%)</span>
+            <span style={{ fontWeight: 700, color: 'var(--blanco)' }}>${calc.aporteLey}</span>
+          </div>
         </div>
       </div>
 
-      {/* Gastos */}
       <div className="card">
         <button
           style={{ width: '100%', background: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: showGastos ? 12 : 0 }}
@@ -270,7 +271,6 @@ export default function NuevoTurnoPage() {
           <div className="card-title" style={{ marginBottom: 0 }}>⛽ Gastos</div>
           {showGastos ? <ChevronUp size={20} color="var(--gris2)" /> : <ChevronDown size={20} color="var(--gris2)" />}
         </button>
-
         {showGastos && (
           <>
             <div className="grid-2">
@@ -287,7 +287,6 @@ export default function NuevoTurnoPage() {
             </div>
           </>
         )}
-
         {!showGastos && (
           <div style={{ color: 'var(--gris2)', fontSize: '0.8rem', marginTop: 2 }}>
             Total gastos: <strong style={{ color: 'var(--blanco)' }}>${calc.totalGastos.toFixed(0)}</strong> — tocá para expandir
@@ -295,11 +294,9 @@ export default function NuevoTurnoPage() {
         )}
       </div>
 
-      {/* Digitales */}
       <div className="card">
         <div className="card-title">📱 Cobros Digitales</div>
 
-        {/* H13 */}
         <div className="section-divider"><span>H13</span></div>
         {h13.map((v, i) => (
           <div key={i} className="digital-row">
@@ -308,9 +305,7 @@ export default function NuevoTurnoPage() {
               <input
                 className="form-input"
                 style={{ paddingLeft: 28 }}
-                type="number"
-                inputMode="decimal"
-                min="0"
+                type="number" inputMode="decimal" min="0"
                 placeholder="Monto"
                 value={v}
                 onChange={(e) => setH13Val(i, e.target.value)}
@@ -325,7 +320,6 @@ export default function NuevoTurnoPage() {
           <Plus size={14} /> Agregar H13
         </button>
 
-        {/* Mercado Pago */}
         <div className="section-divider" style={{ marginTop: 16 }}><span>Mercado Pago</span></div>
         {mercadoPago.map((mp, i) => (
           <div key={i} style={{ background: 'var(--negro3)', borderRadius: 8, padding: 10, marginBottom: 8 }}>
@@ -335,9 +329,7 @@ export default function NuevoTurnoPage() {
                 <input
                   className="form-input"
                   style={{ paddingLeft: 28, fontSize: '1rem' }}
-                  type="number"
-                  inputMode="decimal"
-                  min="0"
+                  type="number" inputMode="decimal" min="0"
                   placeholder="Monto"
                   value={mp.monto}
                   onChange={(e) => setMPVal(i, 'monto', e.target.value)}
@@ -346,8 +338,7 @@ export default function NuevoTurnoPage() {
               <input
                 className="form-input"
                 style={{ fontSize: '1rem' }}
-                type="text"
-                inputMode="numeric"
+                type="text" inputMode="numeric"
                 placeholder="Nº Operación (12 dígitos)"
                 maxLength={12}
                 value={mp.operacion}
@@ -356,7 +347,7 @@ export default function NuevoTurnoPage() {
             </div>
             {mp.operacion.length > 0 && mp.operacion.length !== 12 && (
               <div style={{ color: 'var(--rojo)', fontSize: '0.75rem', marginBottom: 4 }}>
-                ⚠ El número de operación debe tener 12 dígitos ({mp.operacion.length}/12)
+                ⚠ {mp.operacion.length}/12 dígitos
               </div>
             )}
             {mercadoPago.length > 1 && (
@@ -370,17 +361,15 @@ export default function NuevoTurnoPage() {
           <Plus size={14} /> Agregar Mercado Pago
         </button>
 
-        {/* Tarjetas */}
         <div className="section-divider" style={{ marginTop: 16 }}><span>Tarjetas Crédito / Débito</span></div>
         <CurrencyInput value={tarjetas} onChange={setTarjetas} placeholder="Total tarjetas" />
       </div>
 
-      {/* Resultado Final */}
       <div className="card">
         <div className="card-title">📊 Resumen del Turno</div>
         <ResultRow label="Total Banderas" value={calc.totalBanderas} highlight />
         <ResultRow label={`Retribución (${pctRetribucion}%)`} value={calc.retribucion} />
-        <ResultRow label="Aporte 18.1% (leyes)" value={calc.aporteLey} />
+        <ResultRow label={`Aportes (${pctAportes}%)`} value={calc.aporteLey} />
         <ResultRow label="Total Gastos Empresa" value={calc.totalGastosEmpresa} />
         <ResultRow label="Líquido Empresa" value={calc.liquidoEmpresa} />
         <ResultRow label="Subtotal" value={calc.subtotal} highlight />
@@ -397,7 +386,6 @@ export default function NuevoTurnoPage() {
         </div>
       </div>
 
-      {/* Save Button */}
       <button
         className="btn btn-primary btn-full"
         style={{ marginBottom: 16, fontSize: '1.1rem', minHeight: 56 }}
