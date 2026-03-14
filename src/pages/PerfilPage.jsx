@@ -1,7 +1,19 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { userDB } from '../db/db';
-import { LogOut, Save } from 'lucide-react';
+import { userDB, turnDB } from '../db/db';
+import { calcularTurno, DEFAULTS } from '../utils/calculos';
+import { LogOut, Save, RefreshCw } from 'lucide-react';
+
+const CONFIG_KEY = 'cat_config';
+
+function getConfig() {
+  try { return JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}'); }
+  catch { return {}; }
+}
+
+function saveConfig(data) {
+  localStorage.setItem(CONFIG_KEY, JSON.stringify(data));
+}
 
 export default function PerfilPage() {
   const { user, logout, refreshUser } = useAuth();
@@ -9,6 +21,10 @@ export default function PerfilPage() {
   const [drawing, setDrawing] = useState(false);
   const [hasSig, setHasSig] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [recalcMsg, setRecalcMsg] = useState('');
+
+  const config = getConfig();
+
   const [form, setForm] = useState({
     nombre: user.nombre || '',
     matricula: user.matricula || '',
@@ -19,6 +35,13 @@ export default function PerfilPage() {
     confirmPassword: '',
   });
 
+  const [pctRetribucion, setPctRetribucion] = useState(
+    config.pctRetribucion ?? DEFAULTS.PCT_RETRIBUCION
+  );
+  const [pctAportes, setPctAportes] = useState(
+    config.pctAportes ?? DEFAULTS.PCT_APORTES
+  );
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -28,7 +51,6 @@ export default function PerfilPage() {
     ctx.strokeStyle = '#111111';
     ctx.lineWidth = 2;
     ctx.lineCap = 'round';
-
     if (user.firma) {
       const img = new Image();
       img.onload = () => ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
@@ -67,9 +89,28 @@ export default function PerfilPage() {
     };
     if (form.newPassword) updates.password = form.newPassword;
     userDB.update(user.id, updates);
+    saveConfig({ pctRetribucion: parseFloat(pctRetribucion), pctAportes: parseFloat(pctAportes) });
     refreshUser();
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+  };
+
+  const handleRecalcular = () => {
+    if (!window.confirm('¿Recalcular todos los turnos con los porcentajes actuales?')) return;
+    const turns = turnDB.getByUser(user.id);
+    let count = 0;
+    turns.forEach((turn) => {
+      const datos = {
+        ...turn,
+        pctRetribucion: parseFloat(pctRetribucion),
+        pctAportes: parseFloat(pctAportes),
+      };
+      const calc = calcularTurno(datos);
+      turnDB.save({ ...turn, ...datos, ...calc });
+      count++;
+    });
+    setRecalcMsg(`✅ ${count} turno${count !== 1 ? 's' : ''} recalculado${count !== 1 ? 's' : ''}`);
+    setTimeout(() => setRecalcMsg(''), 3000);
   };
 
   const isExpired = user.vencimiento && new Date(user.vencimiento) < new Date();
@@ -82,7 +123,7 @@ export default function PerfilPage() {
           Mi Perfil
         </div>
         <div style={{ color: 'var(--gris2)', fontSize: '0.8rem' }}>
-          Cédula: {user.cedula} ·
+          Cód. Chofer: {user.codigoChofer} ·
           <span className={`badge ${isActive ? 'badge-activo' : 'badge-inactivo'}`} style={{ marginLeft: 6 }}>
             {isActive ? 'Activo' : 'Inactivo'}
           </span>
@@ -97,6 +138,7 @@ export default function PerfilPage() {
       </div>
 
       {saved && <div className="alert alert-success">✓ Perfil actualizado</div>}
+      {recalcMsg && <div className="alert alert-success">{recalcMsg}</div>}
 
       <form onSubmit={handleSave}>
         <div className="card">
@@ -122,6 +164,35 @@ export default function PerfilPage() {
           <div className="form-group">
             <label className="form-label">Email</label>
             <input className="form-input" type="email" value={form.email} onChange={(e) => set('email', e.target.value)} />
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="card-title">⚙️ Configuración de Porcentajes</div>
+          <div className="grid-2">
+            <div className="form-group">
+              <label className="form-label">% Retribución</label>
+              <input
+                className="form-input"
+                type="number"
+                min="0" max="100" step="0.1"
+                value={pctRetribucion}
+                onChange={(e) => setPctRetribucion(e.target.value)}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">% Aportes</label>
+              <input
+                className="form-input"
+                type="number"
+                min="0" max="100" step="0.1"
+                value={pctAportes}
+                onChange={(e) => setPctAportes(e.target.value)}
+              />
+            </div>
+          </div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--gris2)', marginTop: 4 }}>
+            Por defecto: Retribución {DEFAULTS.PCT_RETRIBUCION}% · Aportes {DEFAULTS.PCT_APORTES}%
           </div>
         </div>
 
@@ -155,6 +226,10 @@ export default function PerfilPage() {
           <Save size={18} /> GUARDAR CAMBIOS
         </button>
       </form>
+
+      <button className="btn btn-outline btn-full" style={{ marginBottom: 12 }} onClick={handleRecalcular}>
+        <RefreshCw size={18} /> RECALCULAR HISTORIAL
+      </button>
 
       <button className="btn btn-danger btn-full" style={{ marginBottom: 16 }} onClick={logout}>
         <LogOut size={18} /> CERRAR SESIÓN
